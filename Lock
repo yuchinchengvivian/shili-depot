@@ -1,0 +1,744 @@
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+
+/*Put your SSID & Password*/
+const char* ssid = "Sakura";  // Enter SSID here
+const char* password = "TARA061628";  //Enter Password here
+
+ESP8266WebServer server(80);
+
+int lock_time = 100; // 1000ms = 1s
+
+uint8_t LED1pin = D0;
+bool Door1status = LOW;
+
+uint8_t LED2pin = D1;
+bool Door2status = LOW;
+
+uint8_t LED3pin = D2;
+bool Door3status = LOW;
+
+uint8_t LED4pin = D3;
+bool Door4status = LOW;
+
+uint8_t LED5pin = D4;
+bool Door5status = LOW;
+
+uint8_t LED6pin = D5;
+bool Door6status = LOW;
+
+uint8_t LED7pin = D6;
+bool Door7status = LOW;
+
+uint8_t LED8pin = D7;
+bool Door8status = LOW;
+
+void setup() {
+  Serial.begin(115200);
+  delay(100);
+  pinMode(LED1pin, OUTPUT);
+  pinMode(LED2pin, OUTPUT);
+  pinMode(LED3pin, OUTPUT);
+  pinMode(LED4pin, OUTPUT);
+  pinMode(LED5pin, OUTPUT);
+  pinMode(LED6pin, OUTPUT);
+  pinMode(LED7pin, OUTPUT);
+  pinMode(LED8pin, OUTPUT);
+
+  Serial.println("Connecting to ");
+  Serial.println(ssid);
+
+  //connect to your local wi-fi network
+  WiFi.begin(ssid, password);
+
+  //check wi-fi is connected to wi-fi network
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected..!");
+  Serial.print("Got IP: ");
+  Serial.println(WiFi.localIP());
+
+  server.on("/", handle_OnConnect);
+  server.on("/door1open", handle_led1on);
+  server.on("/door1close", handle_led1off);
+  server.on("/door2open", handle_led2on);
+  server.on("/door2close", handle_led2off);
+  server.on("/door3open", handle_led3on);
+  server.on("/door3close", handle_led3off);
+  server.on("/door4open", handle_led4on);
+  server.on("/door4close", handle_led4off);
+  server.on("/door5open", handle_led5on);
+  server.on("/door5close", handle_led5off);
+  server.on("/door6open", handle_led6on);
+  server.on("/door6close", handle_led6off);
+  server.on("/door7open", handle_led7on);
+  server.on("/door7close", handle_led7off);
+  server.on("/door8open", handle_led8on);
+  server.on("/door8close", handle_led8off);
+  server.on("/status", handle_status);
+  server.on("/apisetdoor1open", set_led1on);
+  server.on("/apisetdoor1close", set_led1off);
+  server.on("/apisetdoor2open", set_led2on);
+  server.on("/apisetdoor2close", set_led2off);
+  server.on("/apisetdoor3open", set_led3on);
+  server.on("/apisetdoor3close", set_led3off);
+  server.on("/apisetdoor4open", set_led4on);
+  server.on("/apisetdoor4close", set_led4off);
+  server.on("/apisetdoor5open", set_led5on);
+  server.on("/apisetdoor5close", set_led5off);
+  server.on("/apisetdoor6open", set_led6on);
+  server.on("/apisetdoor6close", set_led6off);
+  server.on("/apisetdoor7open", set_led7on);
+  server.on("/apisetdoor7close", set_led7off);
+  server.on("/apisetdoor8open", set_led8on);
+  server.on("/apisetdoor8close", set_led8off);
+
+  server.onNotFound(handle_NotFound);
+
+  server.begin();
+  Serial.println("HTTP server started");
+
+  Serial.println("JSON Test");
+  String response = "{\n";
+  if(Door1status) {
+    response+= "  \"Door1\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door1\": \"0\",\n";
+  }
+  if(Door2status) {
+    response+= "  \"Door2\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door2\": \"0\",\n";
+  }
+  if(Door3status) {
+    response+= "  \"Door3\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door3\": \"0\",\n";
+  }
+  if(Door4status) {
+    response+= "  \"Door4\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door4\": \"0\",\n";
+  }
+  if(Door5status) {
+    response+= "  \"Door5\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door5\": \"0\",\n";
+  }
+  if(Door6status) {
+    response+= "  \"Door6\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door6\": \"0\",\n";
+  }
+  if(Door7status) {
+    response+= "  \"Door7\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door7\": \"0\",\n";
+  }
+  if(Door8status) {
+    response+= "  \"Door8\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door8\": \"0\",\n";
+  }
+  response+="}";
+  Serial.println(response);
+
+  // Serial.println("HIGH LOW Test");
+  // Serial.println(String(HIGH));
+  // Serial.println(String(LOW));
+
+  // Serial.println("HIGH LOW Test");
+  // if(HIGH) {
+  //   Serial.println("HIGH");
+  // }
+  // else {
+  //   Serial.println("LOW");
+  // }
+}
+
+void loop() {
+  server.handleClient();
+  if(Door1status) {
+    digitalWrite(LED1pin, HIGH);  // turn the LED on (HIGH is the voltage level)
+    // delay(lock_time);                      // wait for a second
+    // digitalWrite(LED1pin, LOW);   // turn the LED off by making the voltage LOW
+    // Door1status = LOW;
+  }
+  else {
+    digitalWrite(LED1pin, LOW);
+  }
+  
+  if(Door2status) {
+    digitalWrite(LED2pin, HIGH);
+    // delay(lock_time);
+    // digitalWrite(LED2pin, LOW);
+    // Door2status = LOW;
+  }
+  else {
+    digitalWrite(LED2pin, LOW);
+  }
+
+  if(Door3status) {
+    digitalWrite(LED3pin, HIGH);
+    // delay(lock_time);
+    // digitalWrite(LED3pin, LOW);
+    // Door3status = LOW;
+  }
+  else {
+    digitalWrite(LED3pin, LOW);
+  }
+
+  if(Door4status) {
+    digitalWrite(LED4pin, HIGH);
+    // delay(lock_time);
+    // digitalWrite(LED4pin, LOW);
+    // Door4status = LOW;
+  }
+  else {
+    digitalWrite(LED4pin, LOW);
+  }
+
+  if(Door5status) {
+    digitalWrite(LED5pin, HIGH);
+    // delay(lock_time);
+    // digitalWrite(LED5pin, LOW);
+    // Door5status = LOW;
+  }
+  else {
+    digitalWrite(LED5pin, LOW);
+  }
+
+  if(Door6status) {
+    digitalWrite(LED6pin, HIGH);
+    // delay(lock_time);
+    // digitalWrite(LED6pin, LOW);
+    // Door6status = LOW;
+  }
+  else {
+    digitalWrite(LED6pin, LOW);
+  }
+
+  if(Door7status) {
+    digitalWrite(LED7pin, HIGH);
+    // delay(lock_time);
+    // digitalWrite(LED7pin, LOW);
+    // Door7status = LOW;
+  }
+  else {
+    digitalWrite(LED7pin, LOW);
+  }
+
+  if(Door8status) {
+    digitalWrite(LED8pin, HIGH);
+    // delay(lock_time);
+    // digitalWrite(LED8pin, LOW);
+    // Door8status = LOW;
+  }
+  else {
+    digitalWrite(LED8pin, LOW);
+  }
+}
+
+void handle_OnConnect() {
+  Serial.println("handle_OnConnect");
+  // Door1status = LOW;
+  // Door2status = LOW;
+  // Door3status = LOW;
+  // Door4status = LOW;
+  // Door5status = LOW;
+  // Door6status = LOW;
+  // Door7status = LOW;
+  // Door8status = LOW;
+  // Serial.println("GPIO0 Status: Close | GPIO1 Status: Close | GPIO2 Status: Close | GPIO3 Status: Close | GPIO4 Status: Close | GPIO5 Status: Close | GPIO6 Status: Close | GPIO7 Status: Close");
+  server.send(200, "text/html", SendHTML(Door1status,Door2status,Door3status,Door4status,Door5status,Door6status,Door7status,Door8status));
+}
+
+void handle_led1on() {
+  Door1status = HIGH;
+  Serial.println("GPIO0 Status: Open");
+  server.send(200, "text/html", SendHTML(true,Door2status,Door3status,Door4status,Door5status,Door6status,Door7status,Door8status)); 
+}
+
+void handle_led1off() {
+  Door1status = LOW;
+  Serial.println("GPIO0 Status: Close");
+  server.send(200, "text/html", SendHTML(false,Door2status,Door3status,Door4status,Door5status,Door6status,Door7status,Door8status)); 
+}
+
+void handle_led2on() {
+  Door2status = HIGH;
+  Serial.println("GPIO1 Status: Open");
+  server.send(200, "text/html", SendHTML(Door1status,true,Door3status,Door4status,Door5status,Door6status,Door7status,Door8status)); 
+}
+
+void handle_led2off() {
+  Door2status = LOW;
+  Serial.println("GPIO1 Status: Close");
+  server.send(200, "text/html", SendHTML(Door1status,false,Door3status,Door4status,Door5status,Door6status,Door7status,Door8status)); 
+}
+
+void handle_led3on() {
+  Door3status = HIGH;
+  Serial.println("GPIO2 Status: Open");
+  server.send(200, "text/html", SendHTML(Door1status,Door2status,true,Door4status,Door5status,Door6status,Door7status,Door8status)); 
+}
+
+void handle_led3off() {
+  Door3status = LOW;
+  Serial.println("GPIO2 Status: Close");
+  server.send(200, "text/html", SendHTML(Door1status,Door2status,false,Door4status,Door5status,Door6status,Door7status,Door8status)); 
+}
+
+void handle_led4on() {
+  Door4status = HIGH;
+  Serial.println("GPIO3 Status: Open");
+  server.send(200, "text/html", SendHTML(Door1status,Door2status,Door3status,true,Door5status,Door6status,Door7status,Door8status)); 
+}
+
+void handle_led4off() {
+  Door4status = LOW;
+  Serial.println("GPIO3 Status: Close");
+  server.send(200, "text/html", SendHTML(Door1status,Door2status,Door3status,false,Door5status,Door6status,Door7status,Door8status)); 
+}
+
+void handle_led5on() {
+  Door5status = HIGH;
+  Serial.println("GPIO4 Status: Open");
+  server.send(200, "text/html", SendHTML(Door1status,Door2status,Door3status,Door4status,true,Door6status,Door7status,Door8status)); 
+}
+
+void handle_led5off() {
+  Door5status = LOW;
+  Serial.println("GPIO4 Status: Close");
+  server.send(200, "text/html", SendHTML(Door1status,Door2status,Door3status,Door4status,false,Door6status,Door7status,Door8status)); 
+}
+
+void handle_led6on() {
+  Door6status = HIGH;
+  Serial.println("GPIO5 Status: Open");
+  server.send(200, "text/html", SendHTML(Door1status,Door2status,Door3status,Door4status,Door5status,true,Door7status,Door8status)); 
+}
+
+void handle_led6off() {
+  Door6status = LOW;
+  Serial.println("GPIO5 Status: Close");
+  server.send(200, "text/html", SendHTML(Door1status,Door2status,Door3status,Door4status,Door5status,false,Door7status,Door8status)); 
+}
+
+void handle_led7on() {
+  Door7status = HIGH;
+  Serial.println("GPIO6 Status: Open");
+  server.send(200, "text/html", SendHTML(Door1status,Door2status,Door3status,Door4status,Door5status,Door6status,true,Door8status)); 
+}
+
+void handle_led7off() {
+  Door7status = LOW;
+  Serial.println("GPIO6 Status: Close");
+  server.send(200, "text/html", SendHTML(Door1status,Door2status,Door3status,Door4status,Door5status,Door6status,false,Door8status)); 
+}
+
+void handle_led8on() {
+  Door8status = HIGH;
+  Serial.println("GPIO7 Status: Open");
+  server.send(200, "text/html", SendHTML(Door1status,Door2status,Door3status,Door4status,Door5status,Door6status,Door7status,true)); 
+}
+
+void handle_led8off() {
+  Door8status = LOW;
+  Serial.println("GPIO7 Status: Close");
+  server.send(200, "text/html", SendHTML(Door1status,Door2status,Door3status,Door4status,Door5status,Door6status,Door7status,false)); 
+}
+
+void handle_NotFound(){
+  server.send(404, "text/plain", "Not found");
+}
+
+String SendHTML(uint8_t led1stat,uint8_t led2stat,uint8_t led3stat,uint8_t led4stat,uint8_t led5stat,uint8_t led6stat,uint8_t led7stat,uint8_t led8stat) {
+  String ptr = "<!DOCTYPE html> <html>\n";
+  ptr +="<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">\n";
+  ptr +="<title>Food Power</title>\n";
+  ptr +="<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}\n";
+  ptr +="body{margin-top: 30px;} h1 {color: #444444;margin: 30px auto 20px;} h3 {color: #444444;margin-bottom: 30px;}\n";
+  ptr +=".button {display: block;width: 80px;background-color: #1abc9c;border: none;color: white;padding: 10px 0px;text-decoration: none;font-size: 25px;margin: 0px auto 35px;cursor: pointer;border-radius: 4px;}\n";
+  ptr +=".button-on {background-color: #1abc9c;}\n";
+  ptr +=".button-on:active {background-color: #16a085;}\n";
+  ptr +=".button-off {background-color: #34495e;}\n";
+  ptr +=".button-off:active {background-color: #2c3e50;}\n";
+  ptr +="p {font-size: 14px;color: #888;margin-bottom: 10px;}\n";
+  ptr +="a {margin-bottom: 0px!important}\n";
+  ptr +="</style>\n";
+  ptr +="</head>\n";
+  ptr +="<body>\n";
+  // ptr +="<h1>ESP8266 Web Server - <span style='color: red;'>test </span></h1>\n";
+  // ptr +="<h3>Food Power</h3>\n";
+  ptr +="<h1>Food Power</h1>\n";
+  
+   if(led1stat)
+  {
+    ptr +="<p>Door 1 Status: Open</p><a class=\"button button-off\" href=\"/door1close\">Close</a>\n";
+    // ptr +="<script type=\"text/javascript\">setTimeout(() => {location.href = \"/\";}, \"1000\");</script>\n";
+  }
+  else
+  {
+    ptr +="<p>Door 1 Status: Close</p><a class=\"button button-on\" href=\"/door1open\">Open</a>\n";
+  }
+
+  if(led2stat)
+  {
+    ptr +="<p>Door 2 Status: Open</p><a class=\"button button-off\" href=\"/door2close\">Close</a>\n";
+    // ptr +="<script type=\"text/javascript\">setTimeout(() => {location.href = \"/\";}, \"1000\");</script>\n";
+  }
+  else
+  {
+    ptr +="<p>Door 2 Status: Close</p><a class=\"button button-on\" href=\"/door2open\">Open</a>\n";
+  }
+
+  if(led3stat)
+  {
+    ptr +="<p>Door 3 Status: Open</p><a class=\"button button-off\" href=\"/door3close\">Close</a>\n";
+    // ptr +="<script type=\"text/javascript\">setTimeout(() => {location.href = \"/\";}, \"1000\");</script>\n";
+  }
+  else
+  {
+    ptr +="<p>Door 3 Status: Close</p><a class=\"button button-on\" href=\"/door3open\">Open</a>\n";
+  }
+
+  if(led4stat)
+  {
+    ptr +="<p>Door 4 Status: Open</p><a class=\"button button-off\" href=\"/door4close\">Close</a>\n";
+    // ptr +="<script type=\"text/javascript\">setTimeout(() => {location.href = \"/\";}, \"1000\");</script>\n";
+  }
+  else
+  {
+    ptr +="<p>Door 4 Status: Close</p><a class=\"button button-on\" href=\"/door4open\">Open</a>\n";
+  }
+
+  if(led5stat)
+  {
+    ptr +="<p>Door 5 Status: Open</p><a class=\"button button-off\" href=\"/door5close\">Close</a>\n";
+    // ptr +="<script type=\"text/javascript\">setTimeout(() => {location.href = \"/\";}, \"1000\");</script>\n";
+  }
+  else
+  {
+    ptr +="<p>Door 5 Status: Close</p><a class=\"button button-on\" href=\"/door5open\">Open</a>\n";
+  }
+
+  if(led6stat)
+  {
+    ptr +="<p>Door 6 Status: Open</p><a class=\"button button-off\" href=\"/door6close\">Close</a>\n";
+    // ptr +="<script type=\"text/javascript\">setTimeout(() => {location.href = \"/\";}, \"1000\");</script>\n";
+  }
+  else
+  {
+    ptr +="<p>Door 6 Status: Close</p><a class=\"button button-on\" href=\"/door6open\">Open</a>\n";
+  }
+
+  if(led7stat)
+  {
+    ptr +="<p>Door 7 Status: Open</p><a class=\"button button-off\" href=\"/door7close\">Close</a>\n";
+    // ptr +="<script type=\"text/javascript\">setTimeout(() => {location.href = \"/\";}, \"1000\");</script>\n";
+  }
+  else
+  {
+    ptr +="<p>Door 7 Status: Close</p><a class=\"button button-on\" href=\"/door7open\">Open</a>\n";
+  }
+
+  if(led8stat)
+  {
+    ptr +="<p>Door 8 Status: Open</p><a class=\"button button-off\" href=\"/door8close\">Close</a>\n";
+    // ptr +="<script type=\"text/javascript\">setTimeout(() => {location.href = \"/\";}, \"1000\");</script>\n";
+  }
+  else
+  {
+    ptr +="<p>Door 8 Status: Close</p><a class=\"button button-on\" href=\"/door8open\">Open</a>\n";
+  }
+  ptr +="</body>\n";
+  ptr +="</html>\n";
+  return ptr;
+}
+
+void handle_status() {
+  String response = "{\n";
+  if(Door1status) {
+    response+= "  \"Door1\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door1\": \"0\",\n";
+  }
+  if(Door2status) {
+    response+= "  \"Door2\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door2\": \"0\",\n";
+  }
+  if(Door3status) {
+    response+= "  \"Door3\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door3\": \"0\",\n";
+  }
+  if(Door4status) {
+    response+= "  \"Door4\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door4\": \"0\",\n";
+  }
+  if(Door5status) {
+    response+= "  \"Door5\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door5\": \"0\",\n";
+  }
+  if(Door6status) {
+    response+= "  \"Door6\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door6\": \"0\",\n";
+  }
+  if(Door7status) {
+    response+= "  \"Door7\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door7\": \"0\",\n";
+  }
+  if(Door8status) {
+    response+= "  \"Door8\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door8\": \"0\",\n";
+  }
+  response+="}";
+
+  Serial.println("handle_status JSON Data:");
+  Serial.println(response);
+  degug();
+
+  server.send(200, "text/json", response);
+}
+
+
+void set_led1on() {
+  Door1status = HIGH;
+  String response = "{\n";
+  response+= "  \"Door1\": \"1\"\n";
+  response+="}";
+  Serial.println("set_led1on(), GPIO0 Status: open");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led1off() {
+  Door1status = LOW;
+  String response = "{\n";
+  response+= "  \"Door1\": \"0\"\n";
+  response+="}";
+  Serial.println("set_led1off(), GPIO0 Status: close");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led2on() {
+  Door2status = HIGH;
+  String response = "{\n";
+  response+= "  \"Door2\": \"1\"\n";
+  response+="}";
+  Serial.println("set_led2on(), GPIO1 Status: open");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led2off() {
+  Door2status = LOW;
+  String response = "{\n";
+  response+= "  \"Door2\": \"0\"\n";
+  response+="}";
+  Serial.println("set_led2off(), GPIO1 Status: close");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led3on() {
+  Door3status = HIGH;
+  String response = "{\n";
+  response+= "  \"Door3\": \"1\"\n";
+  response+="}";
+  Serial.println("set_led3on(), GPIO2 Status: open");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led3off() {
+  Door3status = LOW;
+  String response = "{\n";
+  response+= "  \"Door3\": \"0\"\n";
+  response+="}";
+  Serial.println("set_led3off(), GPIO2 Status: close");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led4on() {
+  Door4status = HIGH;
+  String response = "{\n";
+  response+= "  \"Door4\": \"1\"\n";
+  response+="}";
+  Serial.println("set_led4on(), GPIO3 Status: open");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led4off() {
+  Door4status = LOW;
+  String response = "{\n";
+  response+= "  \"Door4\": \"0\"\n";
+  response+="}";
+  Serial.println("set_led4off(), GPIO3 Status: close");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led5on() {
+  Door5status = HIGH;
+  String response = "{\n";
+  response+= "  \"Door5\": \"1\"\n";
+  response+="}";
+  Serial.println("set_led5on(), GPIO4 Status: open");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led5off() {
+  Door5status = LOW;
+  String response = "{\n";
+  response+= "  \"Door5\": \"0\"\n";
+  response+="}";
+  Serial.println("set_led5off(), GPIO4 Status: close");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led6on() {
+  Door6status = HIGH;
+  String response = "{\n";
+  response+= "  \"Door6\": \"1\"\n";
+  response+="}";
+  Serial.println("set_led6on(), GPIO5 Status: open");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led6off() {
+  Door6status = LOW;
+  String response = "{\n";
+  response+= "  \"Door6\": \"0\"\n";
+  response+="}";
+  Serial.println("set_led6off(), GPIO5 Status: close");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led7on() {
+  Door7status = HIGH;
+  String response = "{\n";
+  response+= "  \"Door7\": \"1\"\n";
+  response+="}";
+  Serial.println("set_led7on(), GPIO6 Status: open");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led7off() {
+  Door7status = LOW;
+  String response = "{\n";
+  response+= "  \"Door7\": \"0\"\n";
+  response+="}";
+  Serial.println("set_led7off(), GPIO6 Status: close");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led8on() {
+  Door8status = HIGH;
+  String response = "{\n";
+  response+= "  \"Door8\": \"1\"\n";
+  response+="}";
+  Serial.println("set_led8on(), GPIO7 Status: open");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void set_led8off() {
+  Door8status = LOW;
+  String response = "{\n";
+  response+= "  \"Door8\": \"0\"\n";
+  response+="}";
+  Serial.println("set_led8off(), GPIO7 Status: close");
+  degug();
+  server.send(200, "text/json", response);
+}
+
+void degug() {
+  Serial.println("JSON Test");
+  String response = "{\n";
+  if(Door1status) {
+    response+= "  \"Door1\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door1\": \"0\",\n";
+  }
+  if(Door2status) {
+    response+= "  \"Door2\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door2\": \"0\",\n";
+  }
+  if(Door3status) {
+    response+= "  \"Door3\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door3\": \"0\",\n";
+  }
+  if(Door4status) {
+    response+= "  \"Door4\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door4\": \"0\",\n";
+  }
+  if(Door5status) {
+    response+= "  \"Door5\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door5\": \"0\",\n";
+  }
+  if(Door6status) {
+    response+= "  \"Door6\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door6\": \"0\",\n";
+  }
+  if(Door7status) {
+    response+= "  \"Door7\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door7\": \"0\",\n";
+  }
+  if(Door8status) {
+    response+= "  \"Door8\": \"1\",\n";
+  }
+  else {
+    response+= "  \"Door8\": \"0\",\n";
+  }
+  response+="}";
+  Serial.println(response);
+}
