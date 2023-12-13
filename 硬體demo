@@ -1,0 +1,10 @@
+硬體部分運用到了NodeMCU 開發板、繼電器、電磁鎖。
+
+NodeMCU 開發板是架構在 ESP-12E 這個型號的板子上，而 ESP-12E 裡面的主要元件就是支援 wifi 的 ESP8266。ESP8266基本上算是WiFi模組，因為它的硬體夠強大，讓它可以獨立運作，當成是一塊完整的開發。
+
+接著是軟體與硬體架構圖，中間是用利用docker架設MQTT Broker，然後由本系統用MQTT傳輸協定來傳送開關門的指令，然後左邊的電磁鎖及NodeMCU就會用一樣的information channel(topic main)去訂閱這個指令並根據該指令去開關門，然後再將開關門的狀態推播到另一個information channel(topic main)，然後右邊的系統根據這個information channel(topic main)就可以收到當前最新所有門的狀態。
+
+接著是軟體實作簡介的部分，首先是要以固定IP連接WiFi，接著是MQTT Broker 連線設定，Client需要設定Server資訊，再來是將門鎖開鎖時間設定為三秒及將門鎖狀態預設為LOW(鎖)，最後是等待Topic指令，根據訂閱的Topic內之指令開關門，並把當前所有門的狀態推送到另一個Topic。
+
+
+
